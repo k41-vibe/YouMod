@@ -4,7 +4,15 @@
 
 #define TweakName @"YouMod"
 
-#define YMLOC(x) [YouModBundle() localizedStringForKey:x value:nil table:nil]
+// Same rule as LOC in Headers.h: never nil. The settings tree is full of
+// @[YMLOC(...), YMLOC(...)] picker options, and one nil there takes the app down with
+// "-[__NSPlaceholderArray initWithObjects:count:]: attempt to insert nil object".
+// A function, not a plain macro, so clang cannot mistake a folded key for a format string.
+static inline NSString *YMLocalizedString(NSString *key) {
+    NSString *value = [YouModBundle() localizedStringForKey:key value:key table:nil];
+    return value ?: key;
+}
+#define YMLOC(x) YMLocalizedString(x)
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 

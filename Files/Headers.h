@@ -780,7 +780,13 @@ extern BOOL isPad();
 
 // Never hand back nil: the settings screens drop LOC() straight into dictionary and
 // array literals, so a missing bundle would crash the app instead of showing raw keys.
-#define LOC(x) ([YouModBundle() localizedStringForKey:(x) value:(x) table:nil] ?: (x))
+// A function, not a plain macro, so clang cannot fold this to the key literal and then
+// read it as a format string at the +stringWithFormat: call sites (-Wformat-extra-args).
+static inline NSString *YouModLocalizedString(NSString *key) {
+    NSString *value = [YouModBundle() localizedStringForKey:key value:key table:nil];
+    return value ?: key;
+}
+#define LOC(x) YouModLocalizedString(x)
 
 @interface YMDownloadProgressView : UIView
 @property (nonatomic, strong) UILabel *titleLabel;
