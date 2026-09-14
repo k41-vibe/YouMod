@@ -1128,18 +1128,8 @@ static NSString *const kYMJAValues[] = {
     @"タブは最低1つ有効にする必要があります。",
 };
 
-BOOL YMPrefersJapanese(void) {
-    static BOOL japanese = NO;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *lang = [[NSLocale preferredLanguages] firstObject] ?: @"";
-        japanese = [lang hasPrefix:@"ja"];
-    });
-    return japanese;
-}
-
 NSString *YMEmbeddedJapanese(NSString *key) {
-    if (!key || !YMPrefersJapanese()) return nil;
+    if (!key) return nil;
 
     static NSDictionary<NSString *, NSString *> *table = nil;
     static dispatch_once_t onceToken;
