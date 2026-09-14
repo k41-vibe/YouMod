@@ -778,7 +778,9 @@ extern UIViewController *YouModTopViewController(UIViewController *root);
 extern BOOL isDarkMode(UIView *view);
 extern BOOL isPad();
 
-#define LOC(x) [YouModBundle() localizedStringForKey:x value:nil table:nil]
+// Never hand back nil: the settings screens drop LOC() straight into dictionary and
+// array literals, so a missing bundle would crash the app instead of showing raw keys.
+#define LOC(x) ([YouModBundle() localizedStringForKey:(x) value:(x) table:nil] ?: (x))
 
 @interface YMDownloadProgressView : UIView
 @property (nonatomic, strong) UILabel *titleLabel;
