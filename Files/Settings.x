@@ -9,6 +9,9 @@
 // "-[__NSPlaceholderArray initWithObjects:count:]: attempt to insert nil object".
 // A function, not a plain macro, so clang cannot mistake a folded key for a format string.
 static inline NSString *YMLocalizedString(NSString *key) {
+    NSString *embedded = YMEmbeddedJapanese(key);
+    if (embedded) return embedded;
+
     NSString *value = [YouModBundle() localizedStringForKey:key value:key table:nil];
     return value ?: key;
 }

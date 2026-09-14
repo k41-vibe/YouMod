@@ -778,11 +778,18 @@ extern UIViewController *YouModTopViewController(UIViewController *root);
 extern BOOL isDarkMode(UIView *view);
 extern BOOL isPad();
 
+// 日本語の文言は本体に焼き込んである(YMEmbeddedJA.x、自動生成)。資材 .bundle を
+// 置けない場所でも設定画面が読めるようにするため。
+extern NSString *YMEmbeddedJapanese(NSString *key);
+
 // Never hand back nil: the settings screens drop LOC() straight into dictionary and
 // array literals, so a missing bundle would crash the app instead of showing raw keys.
 // A function, not a plain macro, so clang cannot fold this to the key literal and then
 // read it as a format string at the +stringWithFormat: call sites (-Wformat-extra-args).
 static inline NSString *YouModLocalizedString(NSString *key) {
+    NSString *embedded = YMEmbeddedJapanese(key);
+    if (embedded) return embedded;
+
     NSString *value = [YouModBundle() localizedStringForKey:key value:key table:nil];
     return value ?: key;
 }
