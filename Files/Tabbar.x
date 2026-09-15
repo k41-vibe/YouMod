@@ -1,5 +1,6 @@
 #import "Headers.h"
 #import <objc/runtime.h>
+#import <objc/message.h>
 
 // Tab icons
 %hook YTAppPivotBarItemStyle
@@ -35,7 +36,9 @@
 static NSString *ymBrowseID(SEL selector) {
     id browseRequest = %c(YTIBrowseRequest);
     if (![browseRequest respondsToSelector:selector]) return nil;
-    return [browseRequest performSelector:selector];
+    // objc_msgSend rather than -performSelector:, which ARC rejects here: it cannot tell
+    // whether a selector it has no declaration for hands back an object it owns.
+    return ((NSString *(*)(id, SEL))objc_msgSend)(browseRequest, selector);
 }
 
 static NSString *ymPivotIDForTabID(NSString *tabID) {
