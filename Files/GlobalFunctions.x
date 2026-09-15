@@ -1,6 +1,7 @@
 #import "Headers.h"
 #import <dlfcn.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 
 // YouMod's bundle (For localizations)
 //
@@ -148,7 +149,10 @@ void YouModSafeSetValue(id object, NSString *key, id value) {
     } @catch (NSException *exception) {}
 }
 
+// Sent through objc_msgSend rather than -performSelector: because ARC cannot tell whether
+// an unknown selector returns something it owns, and treats the call as a possible leak.
+// Every call site here is a void, no-argument method, so the cast is the honest signature.
 void YouModPerformIfPossible(id object, SEL selector) {
     if (![object respondsToSelector:selector]) return;
-    [object performSelector:selector];
+    ((void (*)(id, SEL))objc_msgSend)(object, selector);
 }
