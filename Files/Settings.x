@@ -116,7 +116,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
     // Thanks to the original codes from YTweaks by fosterbarnes - https://github.com/fosterbarnes/YTweaks/blob/e921591a89b87256a2b37c4788bd99282f70d9c2/Settings.x
     // 末尾の印はこの fork の版。どの .dylib が実際に読み込まれているかを画面で確かめられる
     // ようにしてある(ファイルApp が同名を避けて古い .dylib を残し、二重に読ませる事故が続いた)
-    YTSettingsSectionItem *tweakVersion = [YTSettingsSectionItemClass itemWithTitle:@"YouMod v2.0.0 (ja-v5)"
+    YTSettingsSectionItem *tweakVersion = [YTSettingsSectionItemClass itemWithTitle:@"YouMod v2.0.0 (ja-v6)"
         titleDescription:nil
         accessibilityIdentifier:nil
         detailTextBlock:nil
