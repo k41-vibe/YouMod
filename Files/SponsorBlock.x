@@ -452,10 +452,10 @@ UIColor *SBColorFromHex(NSString *hexString) {
 
     if (IS_ENABLED(SBShowNotifications)) {
         useBackwardIconForButton = YES;
-        NSBundle *bundle = YouModBundle();
-        NSString *catName = [bundle localizedStringForKey:[NSString stringWithFormat:@"SB_CAT_%@", segment.category] value:segment.category table:nil];
-        NSString *message = [NSString stringWithFormat:[bundle localizedStringForKey:@"SB_SKIPPED" value:@"%@ skipped" table:nil], catName];
-        NSString *unskipTitle = [bundle localizedStringForKey:@"SB_UNSKIP" value:@"Unskip" table:nil];
+        NSString *catLocKey = [NSString stringWithFormat:@"SB_CAT_%@", segment.category];
+        NSString *catName = LOC(catLocKey);
+        NSString *message = [NSString stringWithFormat:LOC(@"SB_SKIPPED"), catName];
+        NSString *unskipTitle = LOC(@"SB_UNSKIP");
 
         float alertDuration = SBClampedAlertDuration(SBUnskipAlertDuration);
 
@@ -483,9 +483,9 @@ UIColor *SBColorFromHex(NSString *hexString) {
     [self.sbSkippedSegments addObject:segment.UUID];
 
     useBackwardIconForButton = NO;
-    NSBundle *bundle = YouModBundle();
-    NSString *catName = [bundle localizedStringForKey:[NSString stringWithFormat:@"SB_CAT_%@", segment.category] value:segment.category table:nil];
-    NSString *message = [NSString stringWithFormat:[bundle localizedStringForKey:@"SB_DETECTED" value:@"%@ detected" table:nil], catName];
+    NSString *catLocKey = [NSString stringWithFormat:@"SB_CAT_%@", segment.category];
+    NSString *catName = LOC(catLocKey);
+    NSString *message = [NSString stringWithFormat:LOC(@"SB_DETECTED"), catName];
 
     float alertDuration = SBClampedAlertDuration(SBSkipAlertDuration);
 
@@ -493,7 +493,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
     __weak typeof(self) weakSelf = self;
     self.sbNotificationView = [SBSkipNotificationView showInView:parentView
         message:message
-        buttonTitle:[bundle localizedStringForKey:@"SB_SKIP_NOW" value:@"Skip" table:nil]
+        buttonTitle:LOC(@"SB_SKIP_NOW")
         action:^{
             __strong typeof(weakSelf) ss = weakSelf;
             if (ss) [ss seekToTime:(CGFloat)segment.endTime];
@@ -519,9 +519,8 @@ UIColor *SBColorFromHex(NSString *hexString) {
             } else if (action == SBSegmentActionAsk) {
                 if (currentTime < seg.startTime) {
                     useBackwardIconForButton = NO;
-                    NSBundle *bundle = YouModBundle();
-                    NSString *message = [bundle localizedStringForKey:@"SB_JUMP_TO_HIGHLIGHT" value:@"Highlight available. Jump to the point?" table:nil];
-                    NSString *skipTitle = [bundle localizedStringForKey:@"SB_SKIP_NOW" value:@"Skip" table:nil];
+                    NSString *message = LOC(@"SB_JUMP_TO_HIGHLIGHT");
+                    NSString *skipTitle = LOC(@"SB_SKIP_NOW");
 
                     float alertDuration = SBClampedAlertDuration(SBSkipAlertDuration);
 
@@ -553,9 +552,8 @@ UIColor *SBColorFromHex(NSString *hexString) {
 
             if (IS_ENABLED(SBShowNotifications)) {
                 useBackwardIconForButton = YES;
-                NSBundle *bundle = YouModBundle();
-                NSString *message = [bundle localizedStringForKey:@"SB_JUMPED_TO_HIGHLIGHT" value:@"Jumped to highlight" table:nil];
-                NSString *unskipTitle = [bundle localizedStringForKey:@"SB_UNSKIP" value:@"Unskip" table:nil];
+                NSString *message = LOC(@"SB_JUMPED_TO_HIGHLIGHT");
+                NSString *unskipTitle = LOC(@"SB_UNSKIP");
 
                 float alertDuration = SBClampedAlertDuration(SBUnskipAlertDuration);
 

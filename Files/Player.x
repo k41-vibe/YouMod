@@ -423,9 +423,9 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
             playerBar.shouldDisplayTimeRemaining = YES;
         }
     }
-    YTSingleVideoController *sgvid = [self valueForKey:@"_currentSingleVideo"];
-    YTPlayerView *playerview = [sgvid valueForKey:@"_playerView"];
-    YTPlayerViewController *playerviewController = [playerview valueForKey:@"_playerViewDelegate"];
+    YTSingleVideoController *sgvid = YouModSafeValueForKey(self, @"_currentSingleVideo");
+    YTPlayerView *playerview = YouModSafeValueForKey(sgvid, @"_playerView");
+    YTPlayerViewController *playerviewController = YouModSafeValueForKey(playerview, @"_playerViewDelegate");
     YouModDownloadSetCurrentPlayer(playerviewController);
     YouModConfigureRemoteSkipCommands();
     if (INTFORVAL(AutoDRCAudioIndex) != 0) [playerviewController YouModAutoDRCAudio];
@@ -605,6 +605,10 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
             bestQualityLabel = format.qualityLabel;
         }
     }
+
+    // No format reported a resolution: still needs a placeholder, an array literal with a
+    // nil in it takes the app down.
+    bestQualityLabel = bestQualityLabel ?: @"Best";
 
     NSArray *qualityLabels = @[@"Default", bestQualityLabel, @"2160p", @"1440p", @"1080p", @"720p", @"480p", @"360p", @"240p", @"144p"];
     NSString *qualityLabel = qualityLabels[kQualityIndex];

@@ -778,6 +778,12 @@ extern UIViewController *YouModTopViewController(UIViewController *root);
 extern BOOL isDarkMode(UIView *view);
 extern BOOL isPad();
 
+// KVC against YouTube's private ivars. A name the current build no longer has does not
+// come back nil from -valueForKey:, it raises NSUndefinedKeyException, so these check the
+// key really exists before touching it and hand back nil / do nothing when it does not.
+extern id YouModSafeValueForKey(id object, NSString *key);
+extern void YouModSafeSetValue(id object, NSString *key, id value);
+
 // 日本語の文言は本体に焼き込んである(YMEmbeddedJA.x、自動生成)。資材 .bundle を
 // 置けない場所でも設定画面が読めるようにするため。
 extern NSString *YMEmbeddedJapanese(NSString *key);

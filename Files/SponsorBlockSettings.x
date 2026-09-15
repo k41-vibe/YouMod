@@ -534,9 +534,8 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
     NSInteger catIndex = row / 2;
     BOOL isColorRow = (row % 2 == 1);
     NSString *category = sbAllCategories()[catIndex];
-    NSBundle *bundle = YouModBundle();
     NSString *catLocKey = [NSString stringWithFormat:@"SB_CAT_%@", category];
-    NSString *catName = [bundle localizedStringForKey:catLocKey value:category table:nil];
+    NSString *catName = LOC(catLocKey);
 
     if (isColorRow) {
         return [self colorCellForCategory:category name:catName tableView:tableView];
@@ -578,12 +577,11 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
     }
 
     NSMutableArray<UIMenuElement *> *menuActions = [NSMutableArray array];
-    NSBundle *bundle = YouModBundle();
     __weak typeof(self) weakSelf = self;
     __weak typeof(menuButton) weakButton = menuButton;
     for (NSNumber *option in actionOptions) {
         NSInteger actionVal = [option integerValue];
-        NSString *actionTitle = [bundle localizedStringForKey:SBActionLocKey((SBSegmentAction)actionVal) value:nil table:nil];
+        NSString *actionTitle = SBActionName(actionVal);
 
         UIAction *action = [UIAction actionWithTitle:actionTitle image:nil identifier:nil handler:^(__kindof UIAction *a) {
             [[NSUserDefaults standardUserDefaults] setInteger:actionVal forKey:actionKey];
@@ -674,7 +672,8 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
     self.activeColorIndexPath = indexPath;
 
     UIColorPickerViewController *picker = [[UIColorPickerViewController alloc] init];
-    NSString *catName = [YouModBundle() localizedStringForKey:[NSString stringWithFormat:@"SB_CAT_%@", category] value:category table:nil];
+    NSString *catLocKey = [NSString stringWithFormat:@"SB_CAT_%@", category];
+    NSString *catName = LOC(catLocKey);
     picker.title = [NSString stringWithFormat:@"%@ %@", catName, LOC(@"SB_SEGMENT_COLOR_SUFFIX")];
     NSString *currentHex = [[NSUserDefaults standardUserDefaults] stringForKey:colorKey];
     if (currentHex) picker.selectedColor = SBColorFromHex(currentHex);
@@ -770,9 +769,9 @@ NSArray<YMSearchRow *> *sbFlatRowsWithRenderer(SBSettingsViewController *rendere
     }
 
     // Section 2 — per category: an action picker and a colour circle.
-    NSBundle *bundle = YouModBundle();
     for (NSString *category in sbAllCategories()) {
-        NSString *catName = [bundle localizedStringForKey:[NSString stringWithFormat:@"SB_CAT_%@", category] value:category table:nil];
+        NSString *catLocKey = [NSString stringWithFormat:@"SB_CAT_%@", category];
+        NSString *catName = LOC(catLocKey);
 
         YMSearchRow *actionRow = [YMSearchRow new];
         actionRow.searchText = catName;

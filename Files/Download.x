@@ -620,7 +620,7 @@ static YTIPlayerResponse *YouModPlayerDataForPlayer(YTPlayerViewController *play
     YTPlayerResponse *response;
     if ([player respondsToSelector:@selector(contentPlayerResponse)]) {
         response = player.contentPlayerResponse;
-    } else {
+    } else if ([player respondsToSelector:@selector(playerResponse)]) {
         response = player.playerResponse;
     }
     YTIPlayerResponse *playerData = response.playerData;

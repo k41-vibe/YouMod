@@ -129,7 +129,7 @@
 // Remove flyout menu options
 %hook YTDefaultSheetController
 - (void)addAction:(YTActionSheetAction *)action {
-    UIButton *button = action.button;
+    UIButton *button = [action respondsToSelector:@selector(button)] ? action.button : nil;
     NSString *iden = button.accessibilityIdentifier;
     NSString *imageName = [button.currentImage description];
 

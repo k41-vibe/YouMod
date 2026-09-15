@@ -178,7 +178,11 @@ NSArray<YMOverlayButtonSpec *> *YMOrderedOverlayButtons(void) {
 // The player view controller that owns this controls overlay, reached through the
 // overlay's events delegate. Button handlers use it to act on the current video.
 static YTPlayerViewController *YMPlayerVCFromOverlay(YTMainAppControlsOverlayView *overlay) {
+    if (![overlay respondsToSelector:@selector(eventsDelegate)]) return nil;
+
     YTMainAppVideoPlayerOverlayViewController *mainOverlayController = (YTMainAppVideoPlayerOverlayViewController *)overlay.eventsDelegate;
+    if (![mainOverlayController respondsToSelector:@selector(parentViewController)]) return nil;
+
     return mainOverlayController.parentViewController;
 }
 
@@ -204,7 +208,7 @@ static void YMScanForGearFrame(UIView *view, YTMainAppControlsOverlayView *overl
 // the overlay's top region. Returns its frame in the overlay's coordinate space, or
 // CGRectNull if not found (the caller then falls back to the screen edge / top inset).
 static CGRect YMGearFrameInOverlay(YTMainAppControlsOverlayView *overlay) {
-    YTQTMButton *overflow = [overlay valueForKey:@"_overflowButton"];
+    YTQTMButton *overflow = YouModSafeValueForKey(overlay, @"_overflowButton");
     if (overflow.window) {
         return [overflow convertRect:overflow.bounds toView:overlay];
     }
@@ -305,10 +309,10 @@ static BOOL isRelatedVideosExpanded = NO;
     if (specs.count == 0) return;
 
     YTPlayerViewController *player = YMPlayerVCFromOverlay(self);
-    YTSingleVideoController *sgvid = player.activeVideo;
-    YTSingleVideo *sgvid2 = sgvid.singleVideo;
-    BOOL isLive = [sgvid2 isLivePlayback];
-    BOOL overlayVisible = self.isOverlayVisible;
+    YTSingleVideoController *sgvid = [player respondsToSelector:@selector(activeVideo)] ? player.activeVideo : nil;
+    YTSingleVideo *sgvid2 = [sgvid respondsToSelector:@selector(singleVideo)] ? sgvid.singleVideo : nil;
+    BOOL isLive = [sgvid2 respondsToSelector:@selector(isLivePlayback)] ? [sgvid2 isLivePlayback] : NO;
+    BOOL overlayVisible = [self respondsToSelector:@selector(isOverlayVisible)] ? self.isOverlayVisible : NO;
     CGRect gearFrame = YMGearFrameInOverlay(self);
     BOOL hasGear = !CGRectIsNull(gearFrame);
     CGFloat trailingCenterX = hasGear ? CGRectGetMidX(gearFrame) : self.bounds.size.width - YMOverlayButtonEdgePadding - YMOverlayButtonSize / 2.0;
