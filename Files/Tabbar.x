@@ -30,16 +30,24 @@
 }
 %end
 
+// The browse IDs come from class methods YouTube can drop; a missing one has to read
+// as "no such tab", not as an unrecognized selector.
+static NSString *ymBrowseID(SEL selector) {
+    id browseRequest = %c(YTIBrowseRequest);
+    if (![browseRequest respondsToSelector:selector]) return nil;
+    return [browseRequest performSelector:selector];
+}
+
 static NSString *ymPivotIDForTabID(NSString *tabID) {
     if ([tabID isEqualToString:@"home"]) return @"FEwhat_to_watch";
     if ([tabID isEqualToString:@"shorts"]) return @"FEshorts";
     if ([tabID isEqualToString:@"create"]) return @"FEuploads";
     if ([tabID isEqualToString:@"subscriptions"]) return @"FEsubscriptions";
     if ([tabID isEqualToString:@"library"]) return @"FElibrary";
-    if ([tabID isEqualToString:@"history"]) return [%c(YTIBrowseRequest) browseIDForHistory];
-    if ([tabID isEqualToString:@"gaming"]) return [%c(YTIBrowseRequest) browseIDForGamingDestination];
-    if ([tabID isEqualToString:@"sports"]) return [%c(YTIBrowseRequest) browseIDForSportsDestination];
-    if ([tabID isEqualToString:@"notifications"]) return [%c(YTIBrowseRequest) browseIDForNotificationsInbox];
+    if ([tabID isEqualToString:@"history"]) return ymBrowseID(@selector(browseIDForHistory));
+    if ([tabID isEqualToString:@"gaming"]) return ymBrowseID(@selector(browseIDForGamingDestination));
+    if ([tabID isEqualToString:@"sports"]) return ymBrowseID(@selector(browseIDForSportsDestination));
+    if ([tabID isEqualToString:@"notifications"]) return ymBrowseID(@selector(browseIDForNotificationsInbox));
     if ([tabID isEqualToString:@"news"]) return @"UCYfdidRxbB8Qhf0Nx7ioOYw"; // FEnews_destination
     if ([tabID isEqualToString:@"music"]) return @"UC-9-kyTW8ZkZNDHQJ6FgpwQ";
     if ([tabID isEqualToString:@"watchlater"]) return @"VLWL";

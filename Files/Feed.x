@@ -21,7 +21,7 @@
 - (void)viewDidLoad {
     %orig;
     if (IS_ENABLED(HideVoiceSearch)) {
-        [self setValue:@(NO) forKey:@"_isVoiceSearchAllowed"];
+        YouModSafeSetValue(self, @"_isVoiceSearchAllowed", @(NO));
     }
 }
 - (void)setSuggestions:(id)arg1 { if (!IS_ENABLED(HideSearchHis)) %orig; }

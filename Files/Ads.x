@@ -310,7 +310,7 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
 - (void)didMoveToWindow {
     %orig;
     if (IS_ENABLED(HidePaidPromoOverlay)) {
-        UIView *badge = [self valueForKey:@"_overlayBadge"];
+        UIView *badge = YouModSafeValueForKey(self, @"_overlayBadge");
         if (badge && badge.superview) {
             [badge removeFromSuperview];
         }

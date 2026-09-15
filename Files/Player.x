@@ -113,8 +113,11 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 
     YTMainAppVideoPlayerOverlayViewController *con = [self activeVideoPlayerOverlay];
     if (![con isKindOfClass:%c(YTMainAppVideoPlayerOverlayViewController)]) return;
-    CGFloat rate = [con currentPlaybackRate] != 0 ? [con currentPlaybackRate] : 1.0;
-    NSTimeInterval remainingSeconds = (lround(video.totalMediaTime) - lround(time.time)) / rate;
+    CGFloat currentRate = [con respondsToSelector:@selector(currentPlaybackRate)] ? [con currentPlaybackRate] : 0.0;
+    CGFloat rate = currentRate != 0 ? currentRate : 1.0;
+    NSTimeInterval totalMediaTime = [video respondsToSelector:@selector(totalMediaTime)] ? video.totalMediaTime : 0.0;
+    NSTimeInterval currentTime = [time respondsToSelector:@selector(time)] ? time.time : 0.0;
+    NSTimeInterval remainingSeconds = (lround(totalMediaTime) - lround(currentTime)) / rate;
 
     NSString *remainingTimeText;
     NSString *SBTimeRemaining = nil;
@@ -379,7 +382,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 %hook YTAnnotationsViewController
 - (void)loadFeaturedChannelWatermark { 
     if (IS_ENABLED(HideWaterMark)) {
-        [self setValue:nil forKey:@"_watermarkView"];
+        YouModSafeSetValue(self, @"_watermarkView", nil);
         return;
     }
     %orig;
@@ -388,7 +391,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (IS_ENABLED(HideWaterMark)) {
         arg1 = nil;
         arg2 = 0;
-        [self setValue:nil forKey:@"_watermarkView"];
+        YouModSafeSetValue(self, @"_watermarkView", nil);
     }
     %orig(arg1, arg2);
 }
@@ -399,8 +402,8 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     %orig;
     if (singleVideoController && IS_ENABLED(AutoFeedMute)) {
         [singleVideoController setMuted:YES];
-        UIView *soundView = [self.view.superview valueForKey:@"_audioSoundIconView"];
-        [soundView performSelector:@selector(setAudioOn:) withObject:@NO];
+        UIView *soundView = YouModSafeValueForKey(self.view.superview, @"_audioSoundIconView");
+        if ([soundView respondsToSelector:@selector(setAudioOn:)]) [soundView performSelector:@selector(setAudioOn:) withObject:@NO];
     }
 }
 %end
@@ -503,7 +506,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
         action.handler = ^{
             [firstResponder didPressVarispeed:fromView];
         };
-        UIView *elementView = [action.button valueForKey:@"_elementView"];
+        UIView *elementView = YouModSafeValueForKey(action.button, @"_elementView");
         elementView.userInteractionEnabled = NO;
     }
     return actions;
@@ -522,7 +525,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
         NSString *title = [NSString stringWithFormat:@"%.2fx", speeds[i]];
         options[i] = [[YTVarispeedSwitchControllerOptionClass alloc] initWithTitle:title rate:speeds[i]];
     }
-    [self setValue:[NSArray arrayWithObjects:options count:itemCount] forKey:@"_options"];
+    YouModSafeSetValue(self, @"_options", [NSArray arrayWithObjects:options count:itemCount]);
     return self;
 }
 
@@ -666,7 +669,7 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
 - (void)setUserSelectableFormats:(NSArray <MLFormat *> *)formats {
     if (self.redesignedController == nil)
         self.redesignedController = [[%c(YTVideoQualitySwitchRedesignedController) alloc] initWithServiceRegistryScope:nil parentResponder:nil];
-    [self.redesignedController setValue:[self valueForKey:@"_video"] forKey:@"_video"];
+    YouModSafeSetValue(self.redesignedController, @"_video", YouModSafeValueForKey(self, @"_video"));
     NSArray <MLFormat *> *newFormats = [self.redesignedController respondsToSelector:@selector(addRestrictedFormats:)] ? [self.redesignedController addRestrictedFormats:formats] : formats;
     %orig(newFormats);
 }
@@ -690,7 +693,7 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
         action.handler = ^{
             [firstResponder didPressVideoQuality:fromView];
         };
-        UIView *elementView = [action.button valueForKey:@"_elementView"];
+        UIView *elementView = YouModSafeValueForKey(action.button, @"_elementView");
         elementView.userInteractionEnabled = NO;
     }
     return actions;
@@ -726,24 +729,28 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
 %end
 
 static YTMainAppVideoPlayerOverlayView *getMainVideoOverlay(YTPlayerViewController *pvc) {
+    if (![pvc respondsToSelector:@selector(activeVideoPlayerOverlay)]) return nil;
+
     YTMainAppVideoPlayerOverlayViewController *ovcon = [pvc activeVideoPlayerOverlay];
+    if (![ovcon respondsToSelector:@selector(videoPlayerOverlayView)]) return nil;
+
     return [ovcon videoPlayerOverlayView];
 }
 
 static BOOL isRelatedVideosPanelEnabled(YTPlayerViewController *pvc) {
     YTMainAppVideoPlayerOverlayView *ov = getMainVideoOverlay(pvc);
-    YTFullscreenEngagementOverlayView *fullov = [ov valueForKey:@"_fullscreenEngagementOverlayView"];
+    YTFullscreenEngagementOverlayView *fullov = YouModSafeValueForKey(ov, @"_fullscreenEngagementOverlayView");
     if (fullov) {
-        YTRelatedVideosView *relatedview = [fullov valueForKey:@"_relatedVideosView"];
-        YTRelatedVideosViewController *relatedcon = [relatedview valueForKey:@"_delegate"];
-        return [relatedcon isExpanded];
+        YTRelatedVideosView *relatedview = YouModSafeValueForKey(fullov, @"_relatedVideosView");
+        YTRelatedVideosViewController *relatedcon = YouModSafeValueForKey(relatedview, @"_delegate");
+        return [relatedcon respondsToSelector:@selector(isExpanded)] ? [relatedcon isExpanded] : NO;
     }    
     return NO;
 }
 
 static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWidth) {
     YTMainAppVideoPlayerOverlayView *ov = getMainVideoOverlay(pvc);
-    YTEngagementPanelContainerView *engagecontainer = [ov valueForKey:@"_engagementPanelContainerView"];
+    YTEngagementPanelContainerView *engagecontainer = YouModSafeValueForKey(ov, @"_engagementPanelContainerView");
     if (engagecontainer) {
         if (engagecontainer.engagementPanelState == 3) {
             UIView *mainpanel = nil;
@@ -793,7 +800,7 @@ static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWi
         if (isHorizontal) {
             YTMainAppVideoPlayerOverlayView *ov = getMainVideoOverlay(self);
             YTVideoFreeZoomOverlayView *vidfreeov = ov.videoFreeZoomOverlayView;
-            YTVideoFreeZoomOverlayController *vidfreecon = [vidfreeov valueForKey:@"_delegate"];
+            YTVideoFreeZoomOverlayController *vidfreecon = YouModSafeValueForKey(vidfreeov, @"_delegate");
             return IS_ENABLED(SeekOnOverlay) && vidfreecon.state != 4;
         } else {
             if (!IS_ENABLED(GestureControls)) return NO;
@@ -885,7 +892,7 @@ static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWi
         if (currentPanMode == 2) {
             YTMainAppVideoPlayerOverlayView *ovview = [ovcon videoPlayerOverlayView];
             YTInlinePlayerBarContainerView *wth = ovview.playerBar;
-            YTPlayerBarController *playerbarcon = [wth valueForKey:@"_delegate"];
+            YTPlayerBarController *playerbarcon = YouModSafeValueForKey(wth, @"_delegate");
             [playerbarcon didScrub:panGestureRecognizer];
         } else if (currentPanMode == 1) {
             CGPoint startLocation = [panGestureRecognizer locationInView:self.view];
@@ -945,7 +952,7 @@ static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWi
         if (currentPanMode == 2) {
             YTMainAppVideoPlayerOverlayView *ovview = [ovcon videoPlayerOverlayView];
             YTInlinePlayerBarContainerView *wth = ovview.playerBar;
-            YTPlayerBarController *playerbarcon = [wth valueForKey:@"_delegate"];
+            YTPlayerBarController *playerbarcon = YouModSafeValueForKey(wth, @"_delegate");
             [playerbarcon didScrub:panGestureRecognizer];
         } else if (currentPanMode == 1 && controlType != 0) {
             CGPoint translation = [panGestureRecognizer translationInView:self.view];
@@ -1033,7 +1040,7 @@ static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWi
         if (currentPanMode == 2) {
             YTMainAppVideoPlayerOverlayView *ovview = [ovcon videoPlayerOverlayView];
             YTInlinePlayerBarContainerView *wth = ovview.playerBar;
-            YTPlayerBarController *playerbarcon = [wth valueForKey:@"_delegate"];
+            YTPlayerBarController *playerbarcon = YouModSafeValueForKey(wth, @"_delegate");
             [playerbarcon didScrub:panGestureRecognizer];
         } else if (currentPanMode == 1) {
             if (IS_ENABLED(GestureHUD)) {
@@ -1092,7 +1099,7 @@ static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWi
 
 %new
 - (void)YouModAutoFullscreen {
-    YTWatchController *watchController = [self valueForKey:@"_UIDelegate"];
+    YTWatchController *watchController = YouModSafeValueForKey(self, @"_UIDelegate");
     [watchController showFullScreen];
 }
 
@@ -1133,9 +1140,11 @@ static CGFloat remainingOverlayWidth(YTPlayerViewController *pvc, CGFloat fullWi
 - (void)YouModAutoAudioTrack {
     NSInteger selectedIndex = INTFORVAL(AudioTrackLangIndex);
     NSArray *langCodes = getAllSystemLanguageValues();
+    // A stored index from an older build can outrun the current language list
+    if (selectedIndex < 0 || selectedIndex >= (NSInteger)langCodes.count) return;
     NSString *userTargetLang = langCodes[selectedIndex];
     id switchcon = self.audioTrackController;
-    NSArray *availableTracks = [switchcon valueForKey:@"_availableAudioTracks"];
+    NSArray *availableTracks = YouModSafeValueForKey(switchcon, @"_availableAudioTracks");
     if (!availableTracks || availableTracks.count == 0) return;
     YTIAudioTrack *matchedTrack = nil;
 

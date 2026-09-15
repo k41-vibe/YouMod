@@ -642,7 +642,7 @@ static const CGFloat SBPoiMarkerXOffset = 1.5;
     NSMutableArray<UIView *> *markers = [NSMutableArray array];
     UIView *scrubberDot = nil;
     @try {
-        scrubberDot = [self valueForKey:@"_scrubberCircle"];
+        scrubberDot = YouModSafeValueForKey(self, @"_scrubberCircle");
     } @catch (id ex) {}
     for (UIView *sub in subs) {
         if (sub.tag == SBSegmentMarkerTag) {
@@ -790,7 +790,7 @@ static const CGFloat SBPoiMarkerXOffset = 1.5;
         if (barWidth <= 0) return;
 
         @try {
-            scrubberDot = [playerBar valueForKey:@"_scrubberCircle"];
+            scrubberDot = YouModSafeValueForKey(playerBar, @"_scrubberCircle");
         } @catch (id ex) {}
         // Find reference track view for Y position and height
         for (UIView *sub in playerBar.subviews) {
@@ -843,7 +843,7 @@ static const CGFloat SBPoiMarkerXOffset = 1.5;
 
         if ([mainView isKindOfClass:%c(YTModularPlayerBarView)]) {
             @try {
-                scrubberDot = [mainView valueForKey:@"_scrubberCircle"];
+                scrubberDot = YouModSafeValueForKey(mainView, @"_scrubberCircle");
             } @catch (id ex) {}
             // Find reference track view for Y position and height
             for (UIView *sub in mainView.subviews) {

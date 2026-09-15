@@ -30,7 +30,7 @@ static void didSelectRate(float rate) {
 // YouGetCaption (https://github.com/PoomSmart/YouGetCaption)
 static void showTranscript(YTFormat3CaptionViewController *cvc) {
     UIView *parent = sbGetNotificationParent();
-    MLFormat3Captions *currentCaptions = [cvc valueForKey:@"_currentCaptions"];
+    MLFormat3Captions *currentCaptions = YouModSafeValueForKey(cvc, @"_currentCaptions");
     YTIntervalTree *tree = currentCaptions.captions;
     NSMutableString *transcript = [NSMutableString string];
     [tree enumerateAllIntervalsWithBlock:^(YTInterval *interval) {
@@ -457,19 +457,20 @@ static void YouModShowShareNotification(NSString *message, BOOL success) {
 %hook YTPlayerViewController
 %new
 - (void)YouModShareButton:(UIView *)sourceView {
-    if (!self.currentVideoID) {
+    NSString *videoID = [self respondsToSelector:@selector(currentVideoID)] ? self.currentVideoID : nil;
+    if (!videoID) {
         YouModShowShareNotification(LOC(@"ERROR_VIDEOID"), NO);
         return;
-    } else if (self.isPlayingAd) {
+    } else if ([self respondsToSelector:@selector(isPlayingAd)] && self.isPlayingAd) {
         YouModShowShareNotification(LOC(@"ERROR_ADS"), NO);
         return;
     }
 
-    NSString *videoURL = [NSString stringWithFormat:@"https://youtube.com/watch?v=%@", self.currentVideoID];
-    NSInteger seconds = (NSInteger)floor(self.currentVideoMediaTime);
+    NSString *videoURL = [NSString stringWithFormat:@"https://youtube.com/watch?v=%@", videoID];
+    NSInteger seconds = [self respondsToSelector:@selector(currentVideoMediaTime)] ? (NSInteger)floor(self.currentVideoMediaTime) : 0;
     NSString *timestampURL = [NSString stringWithFormat:@"%@&t=%lds", videoURL, (long)seconds];
 
-    UIViewController *presenter = (UIViewController *)[self activeVideoPlayerOverlay];
+    UIViewController *presenter = [self respondsToSelector:@selector(activeVideoPlayerOverlay)] ? (UIViewController *)[self activeVideoPlayerOverlay] : nil;
     YTDefaultSheetController *sheet = [%c(YTDefaultSheetController) sheetControllerWithParentResponder:presenter];
 
     YTActionSheetAction *copyURL = [%c(YTActionSheetAction) actionWithTitle:LOC(@"COPY_URL") iconImage:YouModYTIconImage(250, NO, nil) style:0 handler:^(__unused YTActionSheetAction *action) {
@@ -489,11 +490,11 @@ static void YouModShowShareNotification(NSString *message, BOOL success) {
 }
 %new
 - (void)YouModLoopButton {
-    YTMainAppVideoPlayerOverlayViewController *playerOverlay = self.activeVideoPlayerOverlay;
-    YTAutoplayAutonavController *autoplayController = [playerOverlay valueForKey:@"_autonavController"];
+    YTMainAppVideoPlayerOverlayViewController *playerOverlay = [self respondsToSelector:@selector(activeVideoPlayerOverlay)] ? self.activeVideoPlayerOverlay : nil;
+    YTAutoplayAutonavController *autoplayController = YouModSafeValueForKey(playerOverlay, @"_autonavController");
     BOOL isLoopEnabled = !IS_ENABLED(KeepLoopKey);
     [[NSUserDefaults standardUserDefaults] setBool:isLoopEnabled forKey:KeepLoopKey];
-    [autoplayController setLoopMode:isLoopEnabled ? 2 : 0];
+    if ([autoplayController respondsToSelector:@selector(setLoopMode:)]) [autoplayController setLoopMode:isLoopEnabled ? 2 : 0];
     YouModShowShareNotification(LOC(isLoopEnabled ? @"LOOP_ENABLED" : @"LOOP_DISABLED"), YES);
 }
 - (void)setPlaybackRate:(float)rate {
@@ -585,11 +586,11 @@ static NSString *getCompactQualityLabel(MLFormat *format) {
         return YMIsOverlayButtonEnabled(@"speed.video");
     };
     speed.onTap = ^(YTPlayerViewController *player, YTQTMButton *button) {
-        YTMainAppVideoPlayerOverlayViewController *ovcon = [player activeVideoPlayerOverlay];
-        YTMainAppVideoPlayerOverlayView *ovview = [ovcon videoPlayerOverlayView];
-        YTMainAppControlsOverlayView *conview = [ovview controlsOverlayView];
-        [ovcon didPressVarispeed:button];
-        [conview updateSpeedButton:nil];
+        YTMainAppVideoPlayerOverlayViewController *ovcon = [player respondsToSelector:@selector(activeVideoPlayerOverlay)] ? [player activeVideoPlayerOverlay] : nil;
+        YTMainAppVideoPlayerOverlayView *ovview = [ovcon respondsToSelector:@selector(videoPlayerOverlayView)] ? [ovcon videoPlayerOverlayView] : nil;
+        YTMainAppControlsOverlayView *conview = [ovview respondsToSelector:@selector(controlsOverlayView)] ? [ovview controlsOverlayView] : nil;
+        if ([ovcon respondsToSelector:@selector(didPressVarispeed:)]) [ovcon didPressVarispeed:button];
+        if ([conview respondsToSelector:@selector(updateSpeedButton:)]) [conview updateSpeedButton:nil];
     };
     YMRegisterOverlayButton(speed);
     YMOverlayButtonSpec *quality = [[YMOverlayButtonSpec alloc] init];
@@ -602,11 +603,11 @@ static NSString *getCompactQualityLabel(MLFormat *format) {
         return YMIsOverlayButtonEnabled(@"quality.video");
     };
     quality.onTap = ^(YTPlayerViewController *player, YTQTMButton *button) {
-        YTMainAppVideoPlayerOverlayViewController *ovcon = [player activeVideoPlayerOverlay];
-        YTMainAppVideoPlayerOverlayView *ovview = [ovcon videoPlayerOverlayView];
-        YTMainAppControlsOverlayView *conview = [ovview controlsOverlayView];
-        [ovcon didPressVideoQuality:button];
-        [conview updateQualityButton:nil];
+        YTMainAppVideoPlayerOverlayViewController *ovcon = [player respondsToSelector:@selector(activeVideoPlayerOverlay)] ? [player activeVideoPlayerOverlay] : nil;
+        YTMainAppVideoPlayerOverlayView *ovview = [ovcon respondsToSelector:@selector(videoPlayerOverlayView)] ? [ovcon videoPlayerOverlayView] : nil;
+        YTMainAppControlsOverlayView *conview = [ovview respondsToSelector:@selector(controlsOverlayView)] ? [ovview controlsOverlayView] : nil;
+        if ([ovcon respondsToSelector:@selector(didPressVideoQuality:)]) [ovcon didPressVideoQuality:button];
+        if ([conview respondsToSelector:@selector(updateQualityButton:)]) [conview updateQualityButton:nil];
     };
     YMRegisterOverlayButton(quality);
     YMOverlayButtonSpec *share = [[YMOverlayButtonSpec alloc] init];
@@ -651,8 +652,8 @@ static NSString *getCompactQualityLabel(MLFormat *format) {
         return YMIsOverlayButtonEnabled(@"caption.video");
     };
     caption.onTap = ^(YTPlayerViewController *player, YTQTMButton *button) {
-        YTMainAppVideoPlayerOverlayViewController *c = [player activeVideoPlayerOverlay];
-        YTFormat3CaptionViewController *cvc = [c valueForKey:@"_captionOverlayViewController"];
+        YTMainAppVideoPlayerOverlayViewController *c = [player respondsToSelector:@selector(activeVideoPlayerOverlay)] ? [player activeVideoPlayerOverlay] : nil;
+        YTFormat3CaptionViewController *cvc = YouModSafeValueForKey(c, @"_captionOverlayViewController");
         showTranscript(cvc);
     };
     YMRegisterOverlayButton(caption);

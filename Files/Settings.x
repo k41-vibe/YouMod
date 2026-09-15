@@ -110,7 +110,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
 - (void)updateYouModSectionWithEntry:(id)entry {
     NSMutableArray <YTSettingsSectionItem *> *sectionItems = [NSMutableArray array];
     Class YTSettingsSectionItemClass = %c(YTSettingsSectionItem);
-    YTSettingsViewController *settingsViewController = [self valueForKey:@"_settingsViewControllerDelegate"];
+    YTSettingsViewController *settingsViewController = YouModSafeValueForKey(self, @"_settingsViewControllerDelegate");
 
     // Tweak Version (at the top)
     // Thanks to the original codes from YTweaks by fosterbarnes - https://github.com/fosterbarnes/YTweaks/blob/e921591a89b87256a2b37c4788bd99282f70d9c2/Settings.x

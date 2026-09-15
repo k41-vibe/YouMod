@@ -51,7 +51,7 @@ static BOOL isFullscreenEnabled = NO;
 }
 - (void)loadPlayerBar {
     %orig;
-    if ((isShortsOnlyOn && IS_ENABLED(ShortsOnly)) || (isFullscreenEnabled && IS_ENABLED(FullScreenShorts))) [[self valueForKey:@"_pivotBarProvider"] performSelector:@selector(hidePivotBar)];
+    if ((isShortsOnlyOn && IS_ENABLED(ShortsOnly)) || (isFullscreenEnabled && IS_ENABLED(FullScreenShorts))) YouModPerformIfPossible(YouModSafeValueForKey(self, @"_pivotBarProvider"), @selector(hidePivotBar));
     YTPlayerViewController *main = self.player;
     if (INTFORVAL(CaptionTrack) != 0) [main performSelector:@selector(YouModAutoCaptions) withObject:nil afterDelay:0.5];
     if (INTFORVAL(AutoSpeedIndex) != 0) [main performSelector:@selector(YouModSetAutoSpeed) withObject:nil afterDelay:0.5];
@@ -61,9 +61,11 @@ static BOOL isFullscreenEnabled = NO;
 - (void)YouModAutoAudioTrack:(YTPlayerViewController *)pv {
     NSInteger selectedIndex = INTFORVAL(AudioTrackLangIndex);
     NSArray *langCodes = getAllSystemLanguageValues();
+    // A stored index from an older build can outrun the current language list
+    if (selectedIndex < 0 || selectedIndex >= (NSInteger)langCodes.count) return;
     NSString *userTargetLang = langCodes[selectedIndex];
     id switchcon = self.audioTrackController;
-    NSArray *availableTracks = [switchcon valueForKey:@"_availableAudioTracks"];
+    NSArray *availableTracks = YouModSafeValueForKey(switchcon, @"_availableAudioTracks");
     if (!availableTracks || availableTracks.count == 0) return;
     YTIAudioTrack *matchedTrack = nil;
 
@@ -112,7 +114,7 @@ static BOOL isFullscreenEnabled = NO;
             [self removeFromSuperview];
         }
     } else if (IS_ENABLED(HideShortsSubbar)) {
-        UIView *subbar = [self valueForKey:@"_pausedStateCarouselView"];
+        UIView *subbar = YouModSafeValueForKey(self, @"_pausedStateCarouselView");
         if (subbar && subbar.superview) {
             [subbar removeFromSuperview];
         }
@@ -134,7 +136,8 @@ static void YouModFilterShortsButtons(_ASDisplayView *self, NSString *iden) {
     for (NSString *button in buttonsList) {
         if ([iden isEqualToString:button] && [buttonsList[button] boolValue]) {
             _ASDisplayView *mainView = (_ASDisplayView *)self.superview;
-            ASDisplayNode *node = mainView.keepalive_node;
+            ASDisplayNode *node = [mainView respondsToSelector:@selector(keepalive_node)] ? mainView.keepalive_node : nil;
+            if (![node respondsToSelector:@selector(yogaChildren)] || ![node respondsToSelector:@selector(removeYogaChild:)]) break;
             for (_ASDisplayView *view in node.yogaChildren) {
                 if ([[view description] containsString:button]) {
                     [node removeYogaChild:view];
@@ -157,7 +160,8 @@ static void YouModFilterShortsPausedHeader(_ASDisplayView *self, NSString *iden)
     for (NSString *button in buttonsList) {
         if ([iden isEqualToString:button] && [buttonsList[button] boolValue]) {
             ASScrollView *mainView = (ASScrollView *)self.superview;
-            ASDisplayNode *node = mainView.scrollNode;
+            ASDisplayNode *node = [mainView respondsToSelector:@selector(scrollNode)] ? mainView.scrollNode : nil;
+            if (![node respondsToSelector:@selector(yogaChildren)] || ![node respondsToSelector:@selector(removeYogaChild:)]) break;
             for (_ASDisplayView *view in node.yogaChildren) {
                 if ([[view description] containsString:button]) {
                     [node removeYogaChild:view];
@@ -211,7 +215,7 @@ static void YouModFilterShortsDisclosure(_ASDisplayView *self, NSString *iden) {
 - (void)appDidBecomeActive {
     %orig;
     if ((isFullscreenEnabled && IS_ENABLED(FullScreenShorts)) || (isShortsOnlyOn && IS_ENABLED(ShortsOnly))) {
-        [[self valueForKey:@"_appViewController"] performSelector:@selector(hidePivotBar)];
+        YouModPerformIfPossible(YouModSafeValueForKey(self, @"_appViewController"), @selector(hidePivotBar));
     }
 }
 %end
@@ -230,11 +234,12 @@ static void YouModFilterShortsDisclosure(_ASDisplayView *self, NSString *iden) {
 %new
 - (void)YouModFullscrrenGestureHandler:(UIPinchGestureRecognizer *)gesture {
     if (gesture.state != UIGestureRecognizerStateBegan || (isShortsOnlyOn && IS_ENABLED(ShortsOnly))) return;
-    UIViewController *appVC = [self valueForKey:@"_pivotBarProvider"];
-    BOOL isTabBarHidden = [appVC performSelector:@selector(isPivotBarHidden)];
+    UIViewController *appVC = YouModSafeValueForKey(self, @"_pivotBarProvider");
+    BOOL isTabBarHidden = NO;
+    if ([appVC respondsToSelector:@selector(isPivotBarHidden)]) isTabBarHidden = [appVC performSelector:@selector(isPivotBarHidden)];
     if (gesture.scale > 1.0) {
         if (!isTabBarHidden) {
-            [appVC performSelector:@selector(hidePivotBar)];
+            YouModPerformIfPossible(appVC, @selector(hidePivotBar));
             [UIView animateWithDuration:0.3 animations:^{
                 self.alpha = 0;
             }];
@@ -242,7 +247,7 @@ static void YouModFilterShortsDisclosure(_ASDisplayView *self, NSString *iden) {
         }
     } else if (gesture.scale < 1.0) {
         if (isTabBarHidden) {
-            [appVC performSelector:@selector(showPivotBar)];
+            YouModPerformIfPossible(appVC, @selector(showPivotBar));
             [UIView animateWithDuration:0.3 animations:^{
                 self.alpha = 1;
             }];
@@ -280,7 +285,7 @@ static void YouModFilterShortsDisclosure(_ASDisplayView *self, NSString *iden) {
     UIView *parent = sbGetNotificationParent();
     [SBSkipNotificationView showSuccessInView:parent message:LOC(@"SHORTS_ONLY_DISABLED") duration:3.0];
 
-    [[[[self valueForKey:@"_parentResponder"] valueForKey:@"_delegate"] valueForKey:@"_pivotBarProvider"] performSelector:@selector(showPivotBar)];
+    YouModPerformIfPossible(YouModSafeValueForKey(YouModSafeValueForKey(YouModSafeValueForKey(self, @"_parentResponder"), @"_delegate"), @"_pivotBarProvider"), @selector(showPivotBar));
     [UIView animateWithDuration:0.3 animations:^{
         self.playbackOverlay.alpha = 1;
     }];

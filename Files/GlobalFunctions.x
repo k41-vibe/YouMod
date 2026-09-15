@@ -147,3 +147,8 @@ void YouModSafeSetValue(id object, NSString *key, id value) {
         [object setValue:value forKey:key];
     } @catch (NSException *exception) {}
 }
+
+void YouModPerformIfPossible(id object, SEL selector) {
+    if (![object respondsToSelector:selector]) return;
+    [object performSelector:selector];
+}

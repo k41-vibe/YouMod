@@ -676,7 +676,7 @@ static const void *kYMCachedDisplayedItemsKey = &kYMCachedDisplayedItemsKey;
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
-    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
+    YTQTMButton *backButton = YouModSafeValueForKey(self, @"_backButton");
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
         backButton.tintColor = [UIColor whiteColor];
@@ -1035,7 +1035,10 @@ static const void *kYMCachedDisplayedItemsKey = &kYMCachedDisplayedItemsKey;
 
     id storedVal = [[NSUserDefaults standardUserDefaults] objectForKey:item.key];
     NSInteger idx = storedVal ? [storedVal integerValue] : item.pickerDefault;
-    segment.selectedSegmentIndex = MAX(0, MIN(idx, segment.numberOfSegments - 1));
+    // An empty image list leaves a control with no segments, which no index is valid for
+    if (segment.numberOfSegments > 0) {
+        segment.selectedSegmentIndex = MAX(0, MIN(idx, segment.numberOfSegments - 1));
+    }
     segment.backgroundColor = [UIColor colorWithRed:0.13 green:0.13 blue:0.13 alpha:1.0];
     segment.selectedSegmentTintColor = [UIColor colorWithRed:0.25 green:0.25 blue:0.25 alpha:1.0];
     segment.layer.cornerRadius = 8.0;
@@ -1559,7 +1562,7 @@ static const void *kYMTabSavedScrollEdgeAppearanceKey = &kYMTabSavedScrollEdgeAp
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
-    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
+    YTQTMButton *backButton = YouModSafeValueForKey(self, @"_backButton");
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
         backButton.tintColor = [UIColor whiteColor];
@@ -1975,7 +1978,7 @@ static const void *kYMOverlaySavedScrollEdgeAppearanceKey = &kYMOverlaySavedScro
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
-    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
+    YTQTMButton *backButton = YouModSafeValueForKey(self, @"_backButton");
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
         backButton.tintColor = [UIColor whiteColor];
@@ -2224,17 +2227,17 @@ static void ymRegisterStyledSubclass(Class sourceClass, const char *name) {
 - (void)layoutSubviews {
     %orig;
     if ([self.accessibilityIdentifier isEqualToString:@"id.ui.title.tab.button"]) {
-        UIColor *customTitle = [self valueForKey:@"_desiredCustomTitleColor"];
+        UIColor *customTitle = YouModSafeValueForKey(self, @"_desiredCustomTitleColor");
 
         if (isDarkMode(self)) {
             self.titleLabel.textColor = [UIColor whiteColor];
             if (customTitle) {
-                [self setValue:[UIColor whiteColor] forKey:@"_desiredCustomTitleColor"];
+                YouModSafeSetValue(self, @"_desiredCustomTitleColor", [UIColor whiteColor]);
             }
         } else {
             self.titleLabel.textColor = [UIColor blackColor];
             if (customTitle) {
-                [self setValue:[UIColor blackColor] forKey:@"_desiredCustomTitleColor"];
+                YouModSafeSetValue(self, @"_desiredCustomTitleColor", [UIColor blackColor]);
             }
         }
     } else if ([self.accessibilityIdentifier isEqualToString:@"id.ui.browse.back.button"]) {

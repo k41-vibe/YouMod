@@ -784,6 +784,10 @@ extern BOOL isPad();
 extern id YouModSafeValueForKey(id object, NSString *key);
 extern void YouModSafeSetValue(id object, NSString *key, id value);
 
+// Same idea for a plain message: a class YouTube kept but a method it dropped is an
+// unrecognized selector, not a no-op.
+extern void YouModPerformIfPossible(id object, SEL selector);
+
 // 日本語の文言は本体に焼き込んである(YMEmbeddedJA.x、自動生成)。資材 .bundle を
 // 置けない場所でも設定画面が読めるようにするため。
 extern NSString *YMEmbeddedJapanese(NSString *key);

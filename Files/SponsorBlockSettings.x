@@ -304,7 +304,7 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
-    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
+    YTQTMButton *backButton = YouModSafeValueForKey(self, @"_backButton");
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
         backButton.tintColor = [UIColor whiteColor];
@@ -830,7 +830,7 @@ NSArray<YMSearchRow *> *sbSearchRows(UIViewController *host) {
 
 %new(v@:@)
 - (void)updateSponsorBlockSectionWithEntry:(id)entry {
-    YTSettingsViewController *settingsVC = [self valueForKey:@"_settingsViewControllerDelegate"];
+    YTSettingsViewController *settingsVC = YouModSafeValueForKey(self, @"_settingsViewControllerDelegate");
     // Use runtime-registered subclass of YTStyledViewController for YouTube's nav styling
     Class sbClass = objc_getClass("SBSettingsViewControllerStyled");
     if (!sbClass) sbClass = [SBSettingsViewController class];

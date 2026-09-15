@@ -774,7 +774,10 @@ static NSURL *YouModThumbnailURL(YTPlayerViewController *player) {
         }
     }
 
-    return [NSURL URLWithString:bestThumbnail.URL];
+    NSString *bestURL = bestThumbnail.URL;
+    if (bestURL.length == 0) return nil;
+
+    return [NSURL URLWithString:bestURL];
 }
 
 static void YouModRequestPhotoAccess(void (^completion)(BOOL granted)) {
@@ -1935,10 +1938,11 @@ static void YouModShowDownloadManager(YTPlayerViewController *player, UIViewCont
         return;
     }
     NSMutableArray *items = [NSMutableArray array];
-    YTSingleVideoController *sgvidcon = player.activeVideo;
-    YTSingleVideo *sgvid = sgvidcon.singleVideo;
+    YTSingleVideoController *sgvidcon = [player respondsToSelector:@selector(activeVideo)] ? player.activeVideo : nil;
+    YTSingleVideo *sgvid = [sgvidcon respondsToSelector:@selector(singleVideo)] ? sgvidcon.singleVideo : nil;
+    BOOL isLive = [sgvid respondsToSelector:@selector(isLivePlayback)] ? sgvid.isLivePlayback : NO;
 
-    if (!sgvid.isLivePlayback) {
+    if (!isLive) {
         if (isShorts) {
             [items addObject:[YouModMenuItem itemWithTitle:LOC(@"DOWNLOAD_SHORTS") subtitle:nil icon:YouModYTIconImage(769, NO, nil) handler:^{
                 YouModShowVideoQualitySheet(player, presenter, sender, YES);
@@ -2078,7 +2082,7 @@ static NSString *YouModExtractCommentText(UIView *cellView) {
 
             for (id obj in node.yogaChildren) {
                 if ([obj isKindOfClass:elmTextClass] && [[obj description] containsString:@"id.comment.content.label"]) {
-                    NSAttributedString *text = [obj valueForKey:@"_attributedText"];
+                    NSAttributedString *text = YouModSafeValueForKey(obj, @"_attributedText");
                     resultText = text.string;
                     break;
                 }
@@ -2305,11 +2309,8 @@ static UIImage *YouModExtractPostImage(UIView *cellView) {
     }
     CGFloat btnWidth = 64.0;
     CGFloat btnHeight = 60.0;
-    YTReelElementAsyncComponentView *pov = nil;
-    @try {
-        pov = [self valueForKey:@"_playerOverlayView"];
-    } @catch (...) {}
-    YTReelElementAsyncComponentView *actionBar = [self valueForKey:@"_actionBarComponentView"];
+    YTReelElementAsyncComponentView *pov = YouModSafeValueForKey(self, @"_playerOverlayView");
+    YTReelElementAsyncComponentView *actionBar = YouModSafeValueForKey(self, @"_actionBarComponentView");
     CGFloat X = actionBar.frame.origin.x;
     CGFloat Y = 0.0;
     if (pov == nil) {
@@ -2324,7 +2325,12 @@ static UIImage *YouModExtractPostImage(UIView *cellView) {
 
 %new
 - (void)didTapYouModShortsDownload:(YTQTMButton *)button {
-    YTShortsPlayerViewController *shortsPlayerView = (YTShortsPlayerViewController *)self._viewControllerForAncestor;
+    UIViewController *ancestor = self._viewControllerForAncestor;
+    if (![ancestor isKindOfClass:%c(YTShortsPlayerViewController)]) return;
+
+    YTShortsPlayerViewController *shortsPlayerView = (YTShortsPlayerViewController *)ancestor;
+    if (shortsPlayerView.childViewControllers.count == 0) return;
+
     YTPlayerViewController *player = (YTPlayerViewController *)shortsPlayerView.childViewControllers[0];
     UIViewController *presenter = YouModPresenterForSender(button, player);
     YouModShowDownloadManager(player, presenter, button, YES);

@@ -53,7 +53,7 @@
         return;
     } else if ([controller isKindOfClass:%c(YTELMViewController)]) {
         YTELMViewController *con = (YTELMViewController *)controller;
-        YTIElementRenderer *renderer = [con valueForKey:@"_renderer"];
+        YTIElementRenderer *renderer = YouModSafeValueForKey(con, @"_renderer");
         NSString *desc = [renderer description];
         if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.text_field"] && [desc containsString:@"timeline_search_input_form_id"] && [desc containsString:@"search_input.eml"]) {
             self.superview.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
